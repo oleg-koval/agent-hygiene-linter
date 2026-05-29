@@ -49,6 +49,9 @@ describe("server", () => {
     const html = await home.text();
     expect(home.status).toBe(200);
     expect(html).toContain("AI Refactor Playbook Runner");
+    expect(html).toContain("Prepared data");
+    expect(html).toContain('id="playbook-file"');
+    expect(html).toContain("Smoke test");
 
     const response = await fetch(`${baseUrl}/api/run`, {
       method: "POST",
@@ -58,7 +61,10 @@ describe("server", () => {
       }),
     });
 
-    const payload = (await response.json()) as { status: string; title: string };
+    const payload = (await response.json()) as {
+      status: string;
+      title: string;
+    };
     expect(response.status).toBe(200);
     expect(payload.status).toBe("succeeded");
     expect(payload.title).toBe("Demo");

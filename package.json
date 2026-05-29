@@ -1,7 +1,7 @@
 {
-  "name": "ts-npm-starter",
+  "name": "ai-refactor-playbook-runner",
   "version": "1.0.0",
-  "description": "Production-ready TypeScript npm package starter template",
+  "description": "Markdown-driven AI refactor playbook runner with CLI and local web UI",
   "type": "module",
   "sideEffects": false,
   "license": "MIT",
@@ -10,17 +10,26 @@
     "email": "oleg@bizcuit.nl",
     "url": "https://olegkoval.com"
   },
-  "homepage": "https://oleg-koval.github.io/ts-npm-starter",
+  "homepage": "https://github.com/oleg-koval/ai-refactor-playbook-runner",
   "repository": {
     "type": "git",
-    "url": "https://github.com/oleg-koval/ts-npm-starter.git"
+    "url": "https://github.com/oleg-koval/ai-refactor-playbook-runner.git"
   },
   "bugs": {
-    "url": "https://github.com/oleg-koval/ts-npm-starter/issues"
+    "url": "https://github.com/oleg-koval/ai-refactor-playbook-runner/issues"
   },
-  "keywords": [],
+  "keywords": [
+    "playbook",
+    "refactor",
+    "typescript",
+    "cli",
+    "markdown"
+  ],
   "engines": {
     "node": ">=20.10.0"
+  },
+  "bin": {
+    "ai-refactor-playbook-runner": "./dist/cli.js"
   },
   "exports": {
     ".": {
@@ -32,7 +41,8 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "examples"
   ],
   "devDependencies": {
     "@eslint/js": "^9.26.0",
@@ -63,6 +73,7 @@
     "test:coverage": "vitest run --coverage",
     "ci": "npm run typecheck && npm run lint && npm run test:coverage",
     "semantic-release": "semantic-release",
+    "release:dry-run": "semantic-release --dry-run",
     "docs:index": "docs-index-keeper update",
     "prepare": "lefthook install"
   }

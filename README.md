@@ -1,35 +1,73 @@
 # AI Refactor Playbook Runner
 
-A markdown-driven playbook runner for repeatable, safe codebase-wide refactors.
+Markdown-driven playbook runner for repeatable refactors.
 
-## Status
-Scaffold
+## What it does
 
-## Why this exists
-AI makes refactors cheap. The point is to turn that into a repeatable cleanup loop instead of letting tech debt accumulate.
+- Parses playbooks from markdown files
+- Supports inheritance, variables, retries, timeouts, dry-run, and resume
+- Runs from CLI or a browser UI
+- Exposes a local server you can reach from mobile over Tailscale
 
-## Core idea
-- Read markdown playbooks
-- Expand placeholders
-- Execute step by step
-- Support retries and timeouts
-- Resume interrupted runs
+## Quick start
 
-## Build order
-1. Markdown schema and inheritance
-2. Placeholder interpolation
-3. Execution and reporting
-4. Dry-run and resume
-5. Examples and tests
+```bash
+npm install
+npm run build
+npm run test
+```
 
-## Included
-- Reusable markdown specs
-- Inheritance merge behavior
-- Clear timeout reporting
-- Deterministic execution
+## CLI
 
-## Excluded
-- General-purpose workflow engine
-- Full IDE integration
-- Monorepo orchestration
-- Production deployment pipeline
+Run a playbook file:
+
+```bash
+node dist/cli.js run examples/demo.md
+```
+
+Dry-run it:
+
+```bash
+node dist/cli.js run examples/demo.md --dry-run
+```
+
+Start the web UI:
+
+```bash
+node dist/cli.js serve --host 0.0.0.0 --port 8787
+```
+
+Then open:
+
+- `http://127.0.0.1:8787` locally
+- `http://<your-tailscale-ip>:8787` from mobile on Tailscale
+- or your MagicDNS hostname if you have one
+
+## Playbook format
+
+A playbook is markdown with these sections:
+
+- `# Title`
+- `## Objective`
+- `## Preconditions`
+- `## Inherited Template`
+- `## Variables`
+- `## Steps`
+- `## Validation`
+- `## Rollback`
+- `## Success Criteria`
+- `## Kill Criteria`
+
+Step fields:
+
+- `name`
+- `command`
+- `cwd`
+- `retries`
+- `timeout_seconds`
+
+Variables use `{{placeholder}}` syntax and are merged from the playbook plus runtime overrides.
+
+## Example
+
+See `examples/demo.md`.

@@ -74,7 +74,10 @@ describe("playbook parsing", () => {
 
     expect(playbook.title).toBe("Base playbook");
     expect(playbook.objective).toBe("Normalize import paths.");
-    expect(playbook.preconditions).toEqual(["repo is clean", "tests are green"]);
+    expect(playbook.preconditions).toEqual([
+      "repo is clean",
+      "tests are green",
+    ]);
     expect(playbook.variables).toEqual({ repo_root: "/repo", branch: "main" });
     expect(playbook.steps).toHaveLength(1);
     expect(playbook.steps[0]).toEqual({
