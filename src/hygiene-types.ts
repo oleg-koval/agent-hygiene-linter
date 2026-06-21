@@ -27,4 +27,20 @@ export interface CliOptions {
   format: "text" | "markdown" | "json";
   outputPath?: string;
   minScore: number;
+  fix: boolean;
+  dryRun: boolean;
+}
+
+export interface FixFacts {
+  repoName: string;
+  packageManager: string;
+  scripts: string[];
+  entrypoint: string | null;
+}
+
+export interface FixResult {
+  before: HygieneReport;
+  after: HygieneReport;
+  planned: string[];
+  written: string[];
 }

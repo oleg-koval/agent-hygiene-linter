@@ -8,7 +8,8 @@ import {
   renderTextReport,
 } from "./hygiene-report.js";
 import { scanRepository } from "./hygiene-scan.js";
-import type { CliOptions } from "./hygiene-types.js";
+import { applyFixes } from "./fix.js";
+import type { CliOptions, HygieneReport } from "./hygiene-types.js";
 
 function parseNumber(value: string | undefined, fallback: number): number {
   if (value === undefined) {
@@ -29,10 +30,22 @@ export function parseCliArgs(argv: string[]): CliOptions {
   let format: CliOptions["format"] = "text";
   let outputPath: string | undefined;
   let minScore = 75;
+  let fix = false;
+  let dryRun = false;
 
   for (let index = 0; index < args.length; index += 1) {
     const token = args[index];
     if (token === undefined) {
+      continue;
+    }
+
+    if (token === "--fix") {
+      fix = true;
+      continue;
+    }
+
+    if (token === "--dry-run") {
+      dryRun = true;
       continue;
     }
 
@@ -62,24 +75,58 @@ export function parseCliArgs(argv: string[]): CliOptions {
     }
   }
 
-  const parsed: CliOptions = { repoPath, format, minScore };
+  const parsed: CliOptions = { repoPath, format, minScore, fix, dryRun };
   if (outputPath !== undefined) {
     parsed.outputPath = outputPath;
   }
   return parsed;
 }
 
+function renderReport(
+  report: HygieneReport,
+  format: CliOptions["format"],
+): string {
+  return format === "json"
+    ? renderJsonReport(report)
+    : format === "markdown"
+      ? renderMarkdownReport(report)
+      : renderTextReport(report);
+}
+
+async function runFix(repoPath: string, args: CliOptions): Promise<void> {
+  const result = await applyFixes(repoPath, { dryRun: args.dryRun });
+  if (args.dryRun) {
+    const lines =
+      result.planned.length === 0
+        ? ["Nothing to fix — no missing files this run."]
+        : ["Would create:", ...result.planned.map((p) => `  + ${p}`)];
+    console.log(lines.join("\n"));
+  } else if (result.written.length > 0) {
+    console.log(
+      ["Created:", ...result.written.map((p) => `  + ${p}`)].join("\n"),
+    );
+  } else {
+    console.log("Nothing to fix — no missing files this run.");
+  }
+
+  const report = args.dryRun ? result.before : result.after;
+  process.stdout.write(renderReport(report, args.format));
+  if (report.score < args.minScore) {
+    process.exitCode = 1;
+  }
+}
+
 async function main(): Promise<void> {
   const args = parseCliArgs(process.argv.slice(2));
   const repoPath = resolve(process.cwd(), args.repoPath);
-  const report = await scanRepository(repoPath);
 
-  const output =
-    args.format === "json"
-      ? renderJsonReport(report)
-      : args.format === "markdown"
-        ? renderMarkdownReport(report)
-        : renderTextReport(report);
+  if (args.fix) {
+    await runFix(repoPath, args);
+    return;
+  }
+
+  const report = await scanRepository(repoPath);
+  const output = renderReport(report, args.format);
 
   if (args.outputPath !== undefined) {
     const resolvedOutput = resolve(dirname(repoPath), args.outputPath);

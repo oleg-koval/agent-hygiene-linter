@@ -21,6 +21,8 @@ describe("json output", () => {
       repoPath: "/tmp/repo",
       format: "text",
       minScore: 75,
+      fix: false,
+      dryRun: false,
     });
   });
 });

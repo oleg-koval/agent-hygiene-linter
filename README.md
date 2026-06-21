@@ -68,7 +68,23 @@ agent-hygiene-linter . --format markdown --output hygiene-report.md
 
 # Fail with exit code 1 if score is below threshold (default: 75)
 agent-hygiene-linter . --min-score 80
+
+# Auto-create the missing files it can generate safely, then re-scan
+agent-hygiene-linter . --fix
+
+# Preview what --fix would create without writing anything
+agent-hygiene-linter . --fix --dry-run
 ```
+
+### `--fix`
+
+`--fix` closes the gaps it can close from the repo scan alone — it scaffolds any
+missing `README.md`, `AGENTS.md`, `docs/README.md`, and `CHANGELOG.md` from
+detected facts (package manager, scripts, entrypoint), then re-scans and prints
+the new score. It is deterministic and offline (no LLM), it **never overwrites**
+an existing file, and it is idempotent — a second run writes nothing. Everything
+it cannot generate safely (package scripts, commit history, the entrypoint) stays
+advisory in the report.
 
 ## Example output
 

@@ -18,6 +18,8 @@ describe("parseCliArgs", () => {
       format: "markdown",
       outputPath: "report.md",
       minScore: 82,
+      fix: false,
+      dryRun: false,
     });
   });
 
@@ -26,6 +28,18 @@ describe("parseCliArgs", () => {
       repoPath: process.cwd(),
       format: "text",
       minScore: 75,
+      fix: false,
+      dryRun: false,
+    });
+  });
+
+  it("parses --fix and --dry-run flags", () => {
+    expect(parseCliArgs(["/tmp/repo", "--fix", "--dry-run"])).toEqual({
+      repoPath: "/tmp/repo",
+      format: "text",
+      minScore: 75,
+      fix: true,
+      dryRun: true,
     });
   });
 });
