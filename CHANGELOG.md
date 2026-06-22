@@ -1,3 +1,15 @@
+# [1.1.0](https://github.com/oleg-koval/agent-hygiene-linter/compare/v1.0.1...v1.1.0) (2026-06-22)
+
+
+### Bug Fixes
+
+* address CodeRabbit review on action.yml and tag-major.yml ([05d26fb](https://github.com/oleg-koval/agent-hygiene-linter/commit/05d26fb258b277230a03e3174f6470eef9c7e58c))
+
+
+### Features
+
+* publish as a GitHub Action and remove duplicate release workflow ([431d58e](https://github.com/oleg-koval/agent-hygiene-linter/commit/431d58eb5eced2722e1ff208566608b762a1612d))
+
 ## [1.0.1](https://github.com/oleg-koval/agent-hygiene-linter/compare/v1.0.0...v1.0.1) (2026-06-21)
 
 

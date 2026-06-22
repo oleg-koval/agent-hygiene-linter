@@ -1,6 +1,6 @@
 {
   "name": "agent-hygiene-linter",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "CLI linter that scores repo hygiene for agents and humans",
   "type": "module",
   "sideEffects": false,
