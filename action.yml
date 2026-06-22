@@ -1,0 +1,64 @@
+name: "Agent Hygiene Linter"
+description: "Score repository hygiene for agents and humans, and optionally scaffold the missing files."
+author: "Oleg Koval"
+
+branding:
+  icon: "check-circle"
+  color: "green"
+
+inputs:
+  path:
+    description: "Path to the repository to lint."
+    required: false
+    default: "."
+  min-score:
+    description: "Minimum hygiene score (0-100). The action exits non-zero below this."
+    required: false
+    default: "75"
+  format:
+    description: "Report format: text, markdown, or json."
+    required: false
+    default: "text"
+  fix:
+    description: 'Set to "true" to scaffold missing hygiene files instead of only reporting.'
+    required: false
+    default: "false"
+  output-file:
+    description: "If set, also write the rendered report to this file."
+    required: false
+    default: ""
+  args:
+    description: 'Extra raw CLI arguments appended verbatim (e.g. "--dry-run").'
+    required: false
+    default: ""
+  version:
+    description: "npm version or dist-tag of agent-hygiene-linter to run."
+    required: false
+    default: "latest"
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      env:
+        AHL_VERSION: ${{ inputs.version }}
+        AHL_PATH: ${{ inputs.path }}
+        AHL_MIN: ${{ inputs.min-score }}
+        AHL_FORMAT: ${{ inputs.format }}
+        AHL_FIX: ${{ inputs.fix }}
+        AHL_OUT: ${{ inputs.output-file }}
+        AHL_ARGS: ${{ inputs.args }}
+      run: |
+        set -euo pipefail
+        FLAGS=(--min-score "$AHL_MIN" --format "$AHL_FORMAT")
+        if [ "$AHL_FIX" = "true" ]; then FLAGS+=(--fix); fi
+        # Split extra args on whitespace without glob-expanding them (read does not glob).
+        read -ra EXTRA_ARGS <<<"$AHL_ARGS"
+        # ponytail: run the published npm CLI via npx — no bundling, no Docker image.
+        # Tradeoff: one npm fetch at runtime, and the runner must have Node (GitHub-hosted runners do).
+        # ${arr[@]+...} guard keeps an empty array safe under `set -u` on bash 3.2 (macOS runners).
+        if [ -n "$AHL_OUT" ]; then
+          npx --yes "agent-hygiene-linter@${AHL_VERSION}" "$AHL_PATH" "${FLAGS[@]}" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"} | tee "$AHL_OUT"
+        else
+          npx --yes "agent-hygiene-linter@${AHL_VERSION}" "$AHL_PATH" "${FLAGS[@]}" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
+        fi

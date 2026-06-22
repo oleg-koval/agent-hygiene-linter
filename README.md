@@ -3,6 +3,7 @@
   <a href="https://github.com/oleg-koval/agent-hygiene-linter/releases"><img src="https://img.shields.io/github/v/release/oleg-koval/agent-hygiene-linter" alt="GitHub release"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
   <a href="https://www.npmjs.com/package/agent-hygiene-linter"><img src="https://img.shields.io/npm/v/agent-hygiene-linter" alt="npm version"></a>
+  <a href="https://github.com/marketplace/actions/agent-hygiene-linter"><img src="https://img.shields.io/badge/marketplace-agent--hygiene--linter-2088FF?logo=githubactions&logoColor=white" alt="GitHub Marketplace"></a>
 </p>
 
 <p align="center">
@@ -120,6 +121,31 @@ Add a hygiene gate to your pipeline:
 ```
 
 Exit code `0` = score is at or above the threshold. Exit code `1` = below threshold.
+
+## Use as a GitHub Action
+
+Published on the [GitHub Actions Marketplace](https://github.com/marketplace/actions/agent-hygiene-linter). Add a hygiene gate without writing any shell:
+
+```yaml
+- uses: actions/checkout@v4
+- uses: oleg-koval/agent-hygiene-linter@v1
+  with:
+    path: .
+    min-score: 75
+    format: text
+```
+
+The step fails when the score is below `min-score`.
+
+| Input         | Default   | Description                                                        |
+| ------------- | --------- | ------------------------------------------------------------------ |
+| `path`        | `.`       | Repository path to lint.                                           |
+| `min-score`   | `75`      | Minimum hygiene score (0-100); the step exits non-zero below this. |
+| `format`      | `text`    | `text`, `markdown`, or `json`.                                     |
+| `fix`         | `false`   | Set to `true` to scaffold missing hygiene files.                   |
+| `output-file` | _(unset)_ | Also write the rendered report to this file.                       |
+| `args`        | _(unset)_ | Extra raw CLI arguments appended verbatim.                         |
+| `version`     | `latest`  | npm version or dist-tag of the CLI to run.                         |
 
 ## Programmatic API
 
