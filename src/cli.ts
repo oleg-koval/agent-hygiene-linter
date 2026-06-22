@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -141,9 +142,25 @@ async function main(): Promise<void> {
   }
 }
 
-const entryPoint =
-  process.argv[1] === undefined ? undefined : resolve(process.argv[1]);
-if (entryPoint !== undefined && fileURLToPath(import.meta.url) === entryPoint) {
+// Resolve symlinks on both sides before comparing. When invoked through a bin
+// symlink (npx, a global install, node_modules/.bin), process.argv[1] is the
+// symlink path while import.meta.url is the real module path; comparing without
+// realpath() makes the CLI silently no-op. See tests/cli.test.ts.
+export function isEntrypoint(
+  invokedPath: string | undefined,
+  moduleUrl: string,
+): boolean {
+  if (invokedPath === undefined) {
+    return false;
+  }
+  try {
+    return realpathSync(invokedPath) === realpathSync(fileURLToPath(moduleUrl));
+  } catch {
+    return false;
+  }
+}
+
+if (isEntrypoint(process.argv[1], import.meta.url)) {
   // Exit quietly when the reader closes the pipe early (e.g. `... | head`).
   process.stdout.on("error", (error: NodeJS.ErrnoException) => {
     if (error.code === "EPIPE") {
