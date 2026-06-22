@@ -43,3 +43,23 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx semantic-release
+
+      # Point the moving major tag (e.g. v1) at the latest release. Done here, in
+      # the same job, because a separate `on: release` workflow would never fire:
+      # GitHub does not trigger workflows from GITHUB_TOKEN-created releases.
+      - name: Move major tag to latest release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          LATEST=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)
+          [ -n "$LATEST" ] || { echo "No version tag yet; nothing to do."; exit 0; }
+          MAJOR="${LATEST%%.*}" # v1.2.3 -> v1
+          SHA=$(git rev-list -n1 "$LATEST")
+          if gh api "repos/$REPO/git/refs/tags/$MAJOR" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/$REPO/git/refs/tags/$MAJOR" -f sha="$SHA" -F force=true
+          else
+            gh api -X POST "repos/$REPO/git/refs" -f ref="refs/tags/$MAJOR" -f sha="$SHA"
+          fi
