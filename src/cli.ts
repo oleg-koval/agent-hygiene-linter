@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -142,7 +143,7 @@ async function main(): Promise<void> {
 }
 
 const entryPoint =
-  process.argv[1] === undefined ? undefined : resolve(process.argv[1]);
+  process.argv[1] === undefined ? undefined : realpathSync(process.argv[1]);
 if (entryPoint !== undefined && fileURLToPath(import.meta.url) === entryPoint) {
   // Exit quietly when the reader closes the pipe early (e.g. `... | head`).
   process.stdout.on("error", (error: NodeJS.ErrnoException) => {
