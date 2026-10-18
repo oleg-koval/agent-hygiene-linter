@@ -1,3 +1,13 @@
+## [1.1.1](https://github.com/oleg-koval/agent-hygiene-linter/compare/v1.1.0...v1.1.1) (2026-10-18)
+
+
+### Bug Fixes
+
+* align CI Node version with dependencies ([#8](https://github.com/oleg-koval/agent-hygiene-linter/issues/8)) ([df7ebc8](https://github.com/oleg-koval/agent-hygiene-linter/commit/df7ebc8ae49a0acc463284f3b2bdd78f5d659869))
+* **ci:** use Node 22 for dependency updates ([#10](https://github.com/oleg-koval/agent-hygiene-linter/issues/10)) ([132d6bd](https://github.com/oleg-koval/agent-hygiene-linter/commit/132d6bd3c054b56925c4e4404e7bf8f626834f4d))
+* invoke packaged CLI directly from action ([faf7ef6](https://github.com/oleg-koval/agent-hygiene-linter/commit/faf7ef669119497d2bbf5468b54c8c43115dc6be))
+* run CLI when invoked through npm bin ([50749e6](https://github.com/oleg-koval/agent-hygiene-linter/commit/50749e67b93ef7524598c784bb07851d71c5841b))
+
 # [1.1.0](https://github.com/oleg-koval/agent-hygiene-linter/compare/v1.0.1...v1.1.0) (2026-06-22)
 
 
