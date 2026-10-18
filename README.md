@@ -25,17 +25,17 @@
 
 It checks:
 
-| Finding code                                                     | What it looks for                                  |
-| ---------------------------------------------------------------- | -------------------------------------------------- |
-| `readme-present` / `readme-missing`                              | Top-level `README.md`                              |
-| `agent-doc-present` / `agent-doc-missing`                        | `AGENTS.md` or `CLAUDE.md`                         |
-| `docs-shape-present` / `docs-shape-missing`                      | At least one `.md` file under `docs/`              |
-| `changelog-present` / `changelog-missing`                        | `CHANGELOG.md` or `docs/changelog.md`              |
-| `package-scripts-good` / `package-scripts-missing`               | Standard `build`, `test`, `lint`, `ci` npm scripts |
-| `commit-style-good` / `commit-style-mixed` / `commit-style-weak` | Conventional Commits ratio over last 25 commits    |
-| `entrypoint-present` / `entrypoint-missing`                      | `src/index.ts`, `index.ts`, or `main.ts`           |
+| Finding code                                                                                                   | What it looks for                                                                     |
+| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `readme-present` / `readme-missing`                                                                            | Top-level `README.md`                                                                 |
+| `agent-doc-present` / `agent-doc-missing`                                                                      | `AGENTS.md` or `CLAUDE.md`                                                            |
+| `docs-shape-present` / `docs-shape-missing`                                                                    | At least one `.md` file under `docs/`                                                 |
+| `changelog-present` / `changelog-missing`                                                                      | `CHANGELOG.md` or `docs/changelog.md`                                                 |
+| `package-scripts-good` / `package-scripts-missing` / `package-json-missing` / `package-scripts-not-applicable` | Standard npm scripts for Node repos; not applicable to other or undetected ecosystems |
+| `commit-style-good` / `commit-style-mixed` / `commit-style-weak`                                               | Conventional Commits ratio over last 25 commits                                       |
+| `entrypoint-present` / `entrypoint-missing` / `entrypoint-not-applicable`                                      | Entrypoint conventions for Node, Python, Go, and Rust; not applicable if undetected   |
 
-**Scoring:** each `fix now` finding costs 18 points; each `warning` costs 8 points. Minimum score is 0.
+**Scoring:** each `fix now` finding costs 18 points; each `warning` costs 8 points. `not applicable` findings are excluded from scoring. Minimum score is 0.
 
 ## Install
 

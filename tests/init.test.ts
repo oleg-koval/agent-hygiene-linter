@@ -7,7 +7,7 @@ const report: HygieneReport = {
   repoName: "repo",
   scannedAt: "2026-06-14T09:00:00.000Z",
   score: 88,
-  counts: { good: 4, warning: 1, fixNow: 0 },
+  counts: { good: 4, warning: 1, fixNow: 0, notApplicable: 0 },
   findings: [
     {
       code: "readme-present",

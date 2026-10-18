@@ -5,6 +5,7 @@ function sortFindings(findings: HygieneFinding[]): HygieneFinding[] {
     "fix now": 0,
     warning: 1,
     good: 2,
+    "not applicable": 3,
   };
 
   return [...findings].sort((left, right) => {
@@ -30,6 +31,7 @@ export function renderMarkdownReport(report: HygieneReport): string {
     `- Good: ${String(report.counts.good)}`,
     `- Warning: ${String(report.counts.warning)}`,
     `- Fix now: ${String(report.counts.fixNow)}`,
+    `- Not applicable: ${String(report.counts.notApplicable)}`,
     ``,
     `## Findings`,
   ];
@@ -41,7 +43,9 @@ export function renderMarkdownReport(report: HygieneReport): string {
   }
 
   const topIssues = sortedFindings
-    .filter((finding) => finding.bucket !== "good")
+    .filter(
+      (finding) => finding.bucket === "warning" || finding.bucket === "fix now",
+    )
     .slice(0, 5);
   if (topIssues.length > 0) {
     lines.push(``, `## Highest-impact fixes`);
@@ -58,7 +62,7 @@ export function renderTextReport(report: HygieneReport): string {
     `Agent hygiene score: ${String(report.score)}/100`,
     `Repo: ${report.repoName}`,
     `Path: ${report.repoPath}`,
-    `Good: ${String(report.counts.good)} | Warning: ${String(report.counts.warning)} | Fix now: ${String(report.counts.fixNow)}`,
+    `Good: ${String(report.counts.good)} | Warning: ${String(report.counts.warning)} | Fix now: ${String(report.counts.fixNow)} | Not applicable: ${String(report.counts.notApplicable)}`,
     ``,
   ];
 

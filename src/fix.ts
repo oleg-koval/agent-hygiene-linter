@@ -1,5 +1,10 @@
 import { basename, join } from "node:path";
-import { exists, readPackageScripts } from "./hygiene-checks.js";
+import {
+  exists,
+  findEntrypoint,
+  readPackageScripts,
+  detectEcosystems,
+} from "./hygiene-checks.js";
 import { scanRepository } from "./hygiene-scan.js";
 import {
   renderAgents,
@@ -42,21 +47,15 @@ async function detectPackageManager(repoPath: string): Promise<string> {
   return "npm";
 }
 
-async function detectEntrypoint(repoPath: string): Promise<string | null> {
-  for (const rel of ["src/index.ts", "index.ts", "main.ts"]) {
-    if (await exists(join(repoPath, rel))) {
-      return rel;
-    }
-  }
-  return null;
-}
-
 export async function gatherFixFacts(repoPath: string): Promise<FixFacts> {
   return {
     repoName: basename(repoPath) || repoPath,
     packageManager: await detectPackageManager(repoPath),
     scripts: await readPackageScripts(repoPath),
-    entrypoint: await detectEntrypoint(repoPath),
+    entrypoint: await findEntrypoint(
+      repoPath,
+      await detectEcosystems(repoPath),
+    ),
   };
 }
 
