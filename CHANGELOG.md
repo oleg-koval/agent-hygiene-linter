@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/oleg-koval/agent-hygiene-linter/compare/v1.1.1...v1.1.2) (2026-10-18)
+
+
+### Bug Fixes
+
+* **release:** upgrade GitHub failure reporter ([#13](https://github.com/oleg-koval/agent-hygiene-linter/issues/13)) ([93b4013](https://github.com/oleg-koval/agent-hygiene-linter/commit/93b40134e80344fc24e802b77cb2620da2a131b4)), closes [#12](https://github.com/oleg-koval/agent-hygiene-linter/issues/12)
+
 ## [1.1.1](https://github.com/oleg-koval/agent-hygiene-linter/compare/v1.1.0...v1.1.1) (2026-10-18)
 
 
