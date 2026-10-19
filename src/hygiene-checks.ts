@@ -15,21 +15,24 @@ export function makeFinding(
   bucket: HygieneBucket,
   title: string,
   detail: string,
+  applicability?: HygieneFinding["applicability"],
 ): HygieneFinding {
-  return { code, bucket, title, detail };
+  return applicability === undefined
+    ? { code, bucket, title, detail }
+    : { code, bucket, title, detail, applicability };
 }
 
 export function countBuckets(findings: HygieneFinding[]): HygieneCounts {
   return findings.reduce<HygieneCounts>(
     (accumulator, finding) => {
-      if (finding.bucket === "good") {
+      if (finding.applicability === "not-applicable") {
+        accumulator.notApplicable = (accumulator.notApplicable ?? 0) + 1;
+      } else if (finding.bucket === "good") {
         accumulator.good += 1;
       } else if (finding.bucket === "warning") {
         accumulator.warning += 1;
-      } else if (finding.bucket === "fix now") {
-        accumulator.fixNow += 1;
       } else {
-        accumulator.notApplicable += 1;
+        accumulator.fixNow += 1;
       }
       return accumulator;
     },
@@ -76,68 +79,6 @@ export async function listMarkdownFiles(
   }
 
   return results;
-}
-
-export async function detectEcosystems(root: string): Promise<Set<string>> {
-  const markers: Record<string, string[]> = {
-    node: [
-      "package.json",
-      "package-lock.json",
-      "pnpm-lock.yaml",
-      "yarn.lock",
-      "tsconfig.json",
-      "src/index.ts",
-      "index.ts",
-      "main.ts",
-      "src/index.js",
-      "index.js",
-      "main.js",
-    ],
-    python: [
-      "pyproject.toml",
-      "setup.py",
-      "setup.cfg",
-      "requirements.txt",
-      "Pipfile",
-    ],
-    go: ["go.mod"],
-    rust: ["Cargo.toml"],
-  };
-  const detected = new Set<string>();
-  for (const [ecosystem, paths] of Object.entries(markers)) {
-    for (const path of paths) {
-      if (await exists(join(root, path))) {
-        detected.add(ecosystem);
-        break;
-      }
-    }
-  }
-  return detected;
-}
-
-export async function findEntrypoint(
-  root: string,
-  ecosystems: Set<string>,
-): Promise<string | null> {
-  const candidates: Record<string, string[]> = {
-    node: [
-      "src/index.ts",
-      "index.ts",
-      "main.ts",
-      "src/index.js",
-      "index.js",
-      "main.js",
-    ],
-    python: ["main.py", "src/main.py", "__main__.py", "src/__main__.py"],
-    go: ["main.go", "cmd/main.go"],
-    rust: ["src/main.rs", "src/lib.rs"],
-  };
-  for (const ecosystem of ecosystems) {
-    for (const candidate of candidates[ecosystem] ?? []) {
-      if (await exists(join(root, candidate))) return candidate;
-    }
-  }
-  return null;
 }
 
 export async function readPackageScripts(root: string): Promise<string[]> {

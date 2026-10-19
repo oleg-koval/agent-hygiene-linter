@@ -105,9 +105,10 @@ describe("scanRepository", () => {
       finding.code.startsWith("entrypoint-"),
     );
 
-    expect(packageScripts?.bucket).toBe("not applicable");
+    expect(packageScripts?.applicability).toBe("not-applicable");
     expect(packageScripts?.code).toBe("package-scripts-not-applicable");
     expect(entrypoint?.code).toBe("entrypoint-present");
+    expect(entrypoint?.detail).toContain("src/main.py");
     expect(report.score).toBe(100);
   });
 
@@ -116,7 +117,12 @@ describe("scanRepository", () => {
     cleanup.push(goRoot);
     await initGitRepo(goRoot);
     await writeFile(join(goRoot, "go.mod"), "module example\\n", "utf8");
-    await writeFile(join(goRoot, "main.go"), "package main\\n", "utf8");
+    await mkdir(join(goRoot, "cmd", "server"), { recursive: true });
+    await writeFile(
+      join(goRoot, "cmd", "server", "main.go"),
+      "package main\\n",
+      "utf8",
+    );
 
     const rustRoot = await mkdtemp(join(tmpdir(), "agent-hygiene-rust-"));
     cleanup.push(rustRoot);
@@ -126,25 +132,138 @@ describe("scanRepository", () => {
       "[package]\\nname = 'sample'\\n",
       "utf8",
     );
-    await mkdir(join(rustRoot, "src"));
+    await mkdir(join(rustRoot, "src", "bin"), { recursive: true });
     await writeFile(
-      join(rustRoot, "src", "lib.rs"),
-      "pub fn run() {}\\n",
+      join(rustRoot, "src", "bin", "cli.rs"),
+      "fn main() {}\\n",
       "utf8",
     );
 
-    for (const root of [goRoot, rustRoot]) {
-      const report = await scanRepository(root);
-      expect(
-        report.findings.find(
-          (finding) => finding.code === "entrypoint-present",
-        ),
-      ).toBeDefined();
+    const goReport = await scanRepository(goRoot);
+    const rustReport = await scanRepository(rustRoot);
+    expect(
+      goReport.findings.find((finding) => finding.code === "entrypoint-present")
+        ?.detail,
+    ).toContain("cmd/server/main.go");
+    expect(
+      rustReport.findings.find(
+        (finding) => finding.code === "entrypoint-present",
+      )?.detail,
+    ).toContain("src/bin/cli.rs");
+    for (const report of [goReport, rustReport]) {
       expect(
         report.findings.find(
           (finding) => finding.code === "package-scripts-not-applicable",
         ),
       ).toBeDefined();
+    }
+  });
+
+  it("does not classify TypeScript configs and entrypoints alone as Node", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-hygiene-deno-"));
+    cleanup.push(root);
+    await initGitRepo(root);
+    await writeFile(join(root, "deno.json"), "{}\\n", "utf8");
+    await writeFile(join(root, "tsconfig.json"), "{}\\n", "utf8");
+    await writeFile(join(root, "main.ts"), "console.log('hello');\\n", "utf8");
+
+    const report = await scanRepository(root);
+    expect(
+      report.findings.find(
+        (finding) => finding.code === "package-scripts-not-applicable",
+      )?.applicability,
+    ).toBe("not-applicable");
+    expect(
+      report.findings.find(
+        (finding) => finding.code === "entrypoint-not-applicable",
+      )?.applicability,
+    ).toBe("not-applicable");
+  });
+
+  it("recognizes Python library packages under src/<package>", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-hygiene-python-lib-"));
+    cleanup.push(root);
+    await initGitRepo(root);
+    await mkdir(join(root, "src", "sample_pkg"), { recursive: true });
+    await writeFile(join(root, "src", "sample_pkg", "__init__.py"), "", "utf8");
+
+    const report = await scanRepository(root);
+    expect(
+      report.findings.find((finding) => finding.code === "entrypoint-present")
+        ?.detail,
+    ).toContain("src/sample_pkg/__init__.py");
+  });
+
+  it("recognizes Node package entrypoints declared in package.json", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-hygiene-node-library-"));
+    cleanup.push(root);
+    await initGitRepo(root);
+    await writeFile(
+      join(root, "package.json"),
+      JSON.stringify({ exports: { ".": { import: "./lib/index.js" } } }),
+      "utf8",
+    );
+    await mkdir(join(root, "lib"));
+    await writeFile(join(root, "lib", "index.js"), "export {};\\n", "utf8");
+
+    const report = await scanRepository(root);
+    expect(
+      report.findings.find((finding) => finding.code === "entrypoint-present")
+        ?.detail,
+    ).toContain("lib/index.js");
+  });
+
+  it("checks entrypoints independently for each detected ecosystem", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-hygiene-multistack-"));
+    cleanup.push(root);
+    await initGitRepo(root);
+    await writeFile(
+      join(root, "package.json"),
+      JSON.stringify({ scripts: { test: "node test.js" } }),
+      "utf8",
+    );
+    await writeFile(join(root, "index.js"), "export {};\\n", "utf8");
+    await writeFile(
+      join(root, "pyproject.toml"),
+      "[project]\\nname='demo'\\n",
+      "utf8",
+    );
+
+    const report = await scanRepository(root);
+    const nodeFinding = report.findings.find(
+      (finding) =>
+        finding.code === "entrypoint-present" &&
+        finding.detail.includes("node"),
+    );
+    const pythonFinding = report.findings.find(
+      (finding) =>
+        finding.code === "entrypoint-missing" &&
+        finding.detail.includes("python"),
+    );
+    expect(nodeFinding?.detail).toContain("index.js");
+    expect(pythonFinding).toBeDefined();
+  });
+
+  it("detects standalone Python, Go, and Rust entrypoints", async () => {
+    const fixtures = [
+      { ecosystem: "python", file: "main.py", body: "print('hello')" },
+      { ecosystem: "go", file: "main.go", body: "package main" },
+      { ecosystem: "rust", file: "main.rs", body: "fn main() {}" },
+    ];
+    for (const fixture of fixtures) {
+      const root = await mkdtemp(
+        join(tmpdir(), `agent-hygiene-${fixture.ecosystem}-standalone-`),
+      );
+      cleanup.push(root);
+      await writeFile(join(root, fixture.file), fixture.body, "utf8");
+      const report = await scanRepository(root);
+      expect(
+        report.findings.find(
+          (finding) =>
+            finding.code === "entrypoint-present" &&
+            finding.detail.includes(fixture.ecosystem),
+        )?.detail,
+      ).toContain(fixture.file);
     }
   });
 

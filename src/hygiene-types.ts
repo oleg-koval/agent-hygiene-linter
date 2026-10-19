@@ -1,17 +1,18 @@
-export type HygieneBucket = "good" | "warning" | "fix now" | "not applicable";
+export type HygieneBucket = "good" | "warning" | "fix now";
 
 export interface HygieneFinding {
   code: string;
   bucket: HygieneBucket;
   title: string;
   detail: string;
+  applicability?: "not-applicable";
 }
 
 export interface HygieneCounts {
   good: number;
   warning: number;
   fixNow: number;
-  notApplicable: number;
+  notApplicable?: number;
 }
 
 export interface HygieneReport {

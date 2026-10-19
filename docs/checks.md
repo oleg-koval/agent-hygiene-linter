@@ -38,7 +38,7 @@ Checks `build`, `test`, `lint`, and `ci` scripts only when a Node project is det
 
 ### Entrypoint (`entrypoint-present` / `entrypoint-missing` / `entrypoint-not-applicable`)
 
-Uses ecosystem-specific conventions: Node (`src/index.ts`, `index.ts`, `main.ts`, and JavaScript equivalents), Python (`main.py`, `src/main.py`, `__main__.py`), Go (`main.go`, `cmd/main.go`), and Rust (`src/main.rs`, `src/lib.rs`). If no supported ecosystem is detected, the check is **not applicable**. If one is detected but no conventional entrypoint exists, it remains a **warning**.
+Checks each detected ecosystem independently. Recognizes Node package fields (`main`, `module`, `types`, `exports`) plus common source/library surfaces; Python (`main.py`, `__main__.py`, `src/<package>/__init__.py`); Go (`main.go`, `cmd/<name>/main.go`, root/pkg Go files); and Rust (`src/main.rs`, `src/lib.rs`, `src/bin/*.rs`). If no supported ecosystem is detected, the check is **not applicable**. A missing conventional executable or library surface is a **warning** per detected ecosystem.
 
 ### Commit style (`commit-style-good` / `commit-style-mixed` / `commit-style-weak` / `commit-history-missing`)
 

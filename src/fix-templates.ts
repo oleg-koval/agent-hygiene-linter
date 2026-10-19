@@ -48,12 +48,16 @@ export function renderReadme(facts: FixFacts): string {
     "",
     "> One-line description of what this project does — replace this line.",
     "",
-    "## Install",
-    "",
-    "```bash",
-    `${facts.packageManager} install`,
-    "```",
-    "",
+    ...(facts.packageManager === "not applicable"
+      ? []
+      : [
+          "## Install",
+          "",
+          "```bash",
+          `${facts.packageManager} install`,
+          "```",
+          "",
+        ]),
     ...usageLines(facts),
     "## License",
     "",

@@ -1,11 +1,10 @@
 import { basename, join } from "node:path";
 import type { HygieneFinding, HygieneReport } from "./hygiene-types.js";
+import { detectEcosystems, findEntrypoint } from "./ecosystem-checks.js";
 import {
   classifyCommitStyle,
   collectCommitSubjects,
   countBuckets,
-  detectEcosystems,
-  findEntrypoint,
   exists,
   listMarkdownFiles,
   makeFinding,
@@ -112,11 +111,12 @@ export async function scanRepository(repoPath: string): Promise<HygieneReport> {
     findings.push(
       makeFinding(
         "package-scripts-not-applicable",
-        "not applicable",
+        "good",
         "Node package scripts are not applicable",
         ecosystems.size === 0
           ? "No supported application ecosystem was detected, so Node package scripts were not scored."
           : `Detected ${[...ecosystems].join(", ")}; npm package scripts do not apply.`,
+        "not-applicable",
       ),
     );
   } else if (packageScripts.length > 0) {
@@ -153,29 +153,36 @@ export async function scanRepository(repoPath: string): Promise<HygieneReport> {
 
   findings.push(...classifyCommitStyle(commitSubjects).findings);
 
-  const entrypoint = await findEntrypoint(repoPath, ecosystems);
-  findings.push(
-    ecosystems.size === 0
-      ? makeFinding(
-          "entrypoint-not-applicable",
-          "not applicable",
-          "Entrypoint check is not applicable",
-          "No supported application ecosystem was detected, so no entrypoint convention was assumed.",
-        )
-      : entrypoint !== null
-        ? makeFinding(
-            "entrypoint-present",
-            "good",
-            "An obvious entrypoint exists",
-            `Found ${entrypoint} for ${[...ecosystems].join("/")}.`,
-          )
-        : makeFinding(
-            "entrypoint-missing",
-            "warning",
-            "Entry point is not obvious",
-            `No recognized entrypoint was found for ${[...ecosystems].join("/")}. Document where the main surface lives.`,
-          ),
-  );
+  if (ecosystems.size === 0) {
+    findings.push(
+      makeFinding(
+        "entrypoint-not-applicable",
+        "good",
+        "Entrypoint check is not applicable",
+        "No supported application ecosystem was detected, so no entrypoint convention was assumed.",
+        "not-applicable",
+      ),
+    );
+  } else {
+    for (const ecosystem of ecosystems) {
+      const entrypoint = await findEntrypoint(repoPath, ecosystem);
+      findings.push(
+        entrypoint !== null
+          ? makeFinding(
+              "entrypoint-present",
+              "good",
+              `${ecosystem} entrypoint or library surface exists`,
+              `Found ${entrypoint} for ${ecosystem}.`,
+            )
+          : makeFinding(
+              "entrypoint-missing",
+              "warning",
+              `${ecosystem} entrypoint or library surface is not obvious`,
+              `No recognized ${ecosystem} entrypoint or library surface was found. Document the main surface if it uses a different layout.`,
+            ),
+      );
+    }
+  }
 
   return {
     repoPath,
