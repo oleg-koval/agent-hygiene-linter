@@ -8,6 +8,9 @@ function sortFindings(findings: HygieneFinding[]): HygieneFinding[] {
   };
 
   return [...findings].sort((left, right) => {
+    if (left.applicability !== right.applicability) {
+      return left.applicability === "not-applicable" ? 1 : -1;
+    }
     const bucketDelta = rank[left.bucket] - rank[right.bucket];
     if (bucketDelta !== 0) {
       return bucketDelta;
@@ -30,18 +33,21 @@ export function renderMarkdownReport(report: HygieneReport): string {
     `- Good: ${String(report.counts.good)}`,
     `- Warning: ${String(report.counts.warning)}`,
     `- Fix now: ${String(report.counts.fixNow)}`,
+    `- Not applicable: ${String(report.counts.notApplicable ?? 0)}`,
     ``,
     `## Findings`,
   ];
 
   for (const finding of sortedFindings) {
     lines.push(
-      `- [${finding.bucket}] **${finding.title}** - ${finding.detail}`,
+      `- [${finding.applicability === "not-applicable" ? "not applicable" : finding.bucket}] **${finding.title}** - ${finding.detail}`,
     );
   }
 
   const topIssues = sortedFindings
-    .filter((finding) => finding.bucket !== "good")
+    .filter(
+      (finding) => finding.bucket === "warning" || finding.bucket === "fix now",
+    )
     .slice(0, 5);
   if (topIssues.length > 0) {
     lines.push(``, `## Highest-impact fixes`);
@@ -58,12 +64,14 @@ export function renderTextReport(report: HygieneReport): string {
     `Agent hygiene score: ${String(report.score)}/100`,
     `Repo: ${report.repoName}`,
     `Path: ${report.repoPath}`,
-    `Good: ${String(report.counts.good)} | Warning: ${String(report.counts.warning)} | Fix now: ${String(report.counts.fixNow)}`,
+    `Good: ${String(report.counts.good)} | Warning: ${String(report.counts.warning)} | Fix now: ${String(report.counts.fixNow)} | Not applicable: ${String(report.counts.notApplicable)}`,
     ``,
   ];
 
   for (const finding of sortFindings(report.findings)) {
-    lines.push(`[${finding.bucket}] ${finding.title}`);
+    lines.push(
+      `[${finding.applicability === "not-applicable" ? "not applicable" : finding.bucket}] ${finding.title}`,
+    );
     lines.push(`  ${finding.detail}`);
   }
 

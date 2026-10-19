@@ -1,5 +1,6 @@
 import { basename, join } from "node:path";
 import type { HygieneFinding, HygieneReport } from "./hygiene-types.js";
+import { detectEcosystems, findEntrypoint } from "./ecosystem-checks.js";
 import {
   classifyCommitStyle,
   collectCommitSubjects,
@@ -38,6 +39,7 @@ export async function scanRepository(repoPath: string): Promise<HygieneReport> {
     (await exists(join(repoPath, "CHANGELOG.md"))) ||
     (await exists(join(repoPath, "docs", "changelog.md")));
   const docsMarkdown = await listMarkdownFiles(join(repoPath, "docs"), 1);
+  const ecosystems = await detectEcosystems(repoPath);
   const packageScripts = await readPackageScripts(repoPath);
   const commitSubjects = collectCommitSubjects(repoPath);
 
@@ -105,7 +107,19 @@ export async function scanRepository(repoPath: string): Promise<HygieneReport> {
         ),
   );
 
-  if (packageScripts.length > 0) {
+  if (!ecosystems.has("node")) {
+    findings.push(
+      makeFinding(
+        "package-scripts-not-applicable",
+        "good",
+        "Node package scripts are not applicable",
+        ecosystems.size === 0
+          ? "No supported application ecosystem was detected, so Node package scripts were not scored."
+          : `Detected ${[...ecosystems].join(", ")}; npm package scripts do not apply.`,
+        "not-applicable",
+      ),
+    );
+  } else if (packageScripts.length > 0) {
     const scriptSet = new Set(packageScripts);
     const coverage = ["build", "test", "lint", "ci"].filter((s) =>
       scriptSet.has(s),
@@ -132,33 +146,43 @@ export async function scanRepository(repoPath: string): Promise<HygieneReport> {
         "package-json-missing",
         "warning",
         "No package scripts detected",
-        "This repo may not be a Node project, or package.json is missing useful scripts.",
+        "This Node repo is missing package.json scripts for build/test/lint/ci automation.",
       ),
     );
   }
 
   findings.push(...classifyCommitStyle(commitSubjects).findings);
 
-  const entrypointExists =
-    (await exists(join(repoPath, "src", "index.ts"))) ||
-    (await exists(join(repoPath, "index.ts"))) ||
-    (await exists(join(repoPath, "main.ts")));
-
-  findings.push(
-    entrypointExists
-      ? makeFinding(
-          "entrypoint-present",
-          "good",
-          "An obvious entrypoint exists",
-          "Found a clear code entrypoint for navigation.",
-        )
-      : makeFinding(
-          "entrypoint-missing",
-          "warning",
-          "Entry point is not obvious",
-          "Add an obvious entrypoint or document where the main surface lives.",
-        ),
-  );
+  if (ecosystems.size === 0) {
+    findings.push(
+      makeFinding(
+        "entrypoint-not-applicable",
+        "good",
+        "Entrypoint check is not applicable",
+        "No supported application ecosystem was detected, so no entrypoint convention was assumed.",
+        "not-applicable",
+      ),
+    );
+  } else {
+    for (const ecosystem of ecosystems) {
+      const entrypoint = await findEntrypoint(repoPath, ecosystem);
+      findings.push(
+        entrypoint !== null
+          ? makeFinding(
+              "entrypoint-present",
+              "good",
+              `${ecosystem} entrypoint or library surface exists`,
+              `Found ${entrypoint} for ${ecosystem}.`,
+            )
+          : makeFinding(
+              "entrypoint-missing",
+              "warning",
+              `${ecosystem} entrypoint or library surface is not obvious`,
+              `No recognized ${ecosystem} entrypoint or library surface was found. Document the main surface if it uses a different layout.`,
+            ),
+      );
+    }
+  }
 
   return {
     repoPath,

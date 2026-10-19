@@ -5,12 +5,14 @@ export interface HygieneFinding {
   bucket: HygieneBucket;
   title: string;
   detail: string;
+  applicability?: "not-applicable";
 }
 
 export interface HygieneCounts {
   good: number;
   warning: number;
   fixNow: number;
+  notApplicable?: number;
 }
 
 export interface HygieneReport {

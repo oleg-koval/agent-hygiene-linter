@@ -1,4 +1,11 @@
-import { mkdtemp, rm, stat, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -62,6 +69,27 @@ describe("applyFixes", () => {
     expect(result.planned.length).toBe(4);
     expect(result.written).toEqual([]);
     expect(await fileExists(join(dir, "README.md"))).toBe(false);
+  });
+
+  it("does not generate npm commands for a Python repository", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "hygiene-fix-python-"));
+    dirs.push(dir);
+    await writeFile(
+      join(dir, "pyproject.toml"),
+      "[project]\\nname = 'demo'\\n",
+      "utf8",
+    );
+    await mkdir(join(dir, "src", "demo"), { recursive: true });
+    await writeFile(join(dir, "src", "demo", "__init__.py"), "", "utf8");
+
+    await applyFixes(dir, { dryRun: false });
+
+    const readme = await readFile(join(dir, "README.md"), "utf8");
+    const agentGuide = await readFile(join(dir, "AGENTS.md"), "utf8");
+    expect(readme).not.toContain("npm install");
+    expect(readme).not.toContain("## Install");
+    expect(agentGuide).toContain("Package manager: not applicable");
+    expect(agentGuide).toContain("src/demo/__init__.py");
   });
 
   it("never overwrites an existing README", async () => {

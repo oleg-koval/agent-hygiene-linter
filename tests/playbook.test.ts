@@ -9,7 +9,7 @@ describe("json output", () => {
       repoName: "example",
       scannedAt: "2026-06-14T09:00:00.000Z",
       score: 80,
-      counts: { good: 1, warning: 1, fixNow: 0 },
+      counts: { good: 1, warning: 1, fixNow: 0, notApplicable: 0 },
       findings: [],
     };
 

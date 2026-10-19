@@ -1,4 +1,5 @@
 import { basename, join } from "node:path";
+import { detectEcosystems, findEntrypoint } from "./ecosystem-checks.js";
 import { exists, readPackageScripts } from "./hygiene-checks.js";
 import { scanRepository } from "./hygiene-scan.js";
 import {
@@ -32,7 +33,11 @@ const FIXERS: Fixer[] = [
   },
 ];
 
-async function detectPackageManager(repoPath: string): Promise<string> {
+async function detectPackageManager(
+  repoPath: string,
+  isNodeProject: boolean,
+): Promise<string> {
+  if (!isNodeProject) return "not applicable";
   if (await exists(join(repoPath, "pnpm-lock.yaml"))) {
     return "pnpm";
   }
@@ -42,21 +47,21 @@ async function detectPackageManager(repoPath: string): Promise<string> {
   return "npm";
 }
 
-async function detectEntrypoint(repoPath: string): Promise<string | null> {
-  for (const rel of ["src/index.ts", "index.ts", "main.ts"]) {
-    if (await exists(join(repoPath, rel))) {
-      return rel;
-    }
-  }
-  return null;
-}
-
 export async function gatherFixFacts(repoPath: string): Promise<FixFacts> {
+  const ecosystems = await detectEcosystems(repoPath);
+  let entrypoint: string | null = null;
+  for (const ecosystem of ecosystems) {
+    entrypoint = await findEntrypoint(repoPath, ecosystem);
+    if (entrypoint !== null) break;
+  }
   return {
     repoName: basename(repoPath) || repoPath,
-    packageManager: await detectPackageManager(repoPath),
+    packageManager: await detectPackageManager(
+      repoPath,
+      ecosystems.has("node"),
+    ),
     scripts: await readPackageScripts(repoPath),
-    entrypoint: await detectEntrypoint(repoPath),
+    entrypoint,
   };
 }
 

@@ -32,9 +32,13 @@ Walks `docs/` up to one level deep for any `.md` file. An empty or absent `docs/
 
 Looks for `CHANGELOG.md` at root or `docs/changelog.md`. Missing is a **warning** (−8).
 
-### Package scripts (`package-scripts-good` / `package-scripts-missing` / `package-json-missing`)
+### Package scripts (`package-scripts-good` / `package-scripts-missing` / `package-json-missing` / `package-scripts-not-applicable`)
 
-Reads `package.json` and checks for `build`, `test`, `lint`, `ci`. If three or more are present: **good**. Fewer than three: **warning** (−8). No `package.json`: **warning** (−8).
+Checks `build`, `test`, `lint`, and `ci` scripts only when a Node project is detected. Other and undetected ecosystems receive **not applicable** (no score deduction), rather than a false warning for missing `package.json`.
+
+### Entrypoint (`entrypoint-present` / `entrypoint-missing` / `entrypoint-not-applicable`)
+
+Checks each detected ecosystem independently. Recognizes Node package fields (`main`, `module`, `types`, `exports`) plus common source/library surfaces; Python (`main.py`, `__main__.py`, `src/<package>/__init__.py`); Go (`main.go`, `cmd/<name>/main.go`, root/pkg Go files); and Rust (`src/main.rs`, `src/lib.rs`, `src/bin/*.rs`). If no supported ecosystem is detected, the check is **not applicable**. A missing conventional executable or library surface is a **warning** per detected ecosystem.
 
 ### Commit style (`commit-style-good` / `commit-style-mixed` / `commit-style-weak` / `commit-history-missing`)
 
@@ -46,7 +50,3 @@ Reads the last 25 commit subjects via `git log`. Computes the fraction that matc
 | 0.4 – 0.69     | warning (−8)  |
 | < 0.4          | fix now (−18) |
 | No git history | warning (−8)  |
-
-### Entrypoint (`entrypoint-present` / `entrypoint-missing`)
-
-Looks for `src/index.ts`, `index.ts`, or `main.ts`. Missing is a **warning** (−8).

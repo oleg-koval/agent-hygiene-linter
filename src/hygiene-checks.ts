@@ -15,14 +15,19 @@ export function makeFinding(
   bucket: HygieneBucket,
   title: string,
   detail: string,
+  applicability?: HygieneFinding["applicability"],
 ): HygieneFinding {
-  return { code, bucket, title, detail };
+  return applicability === undefined
+    ? { code, bucket, title, detail }
+    : { code, bucket, title, detail, applicability };
 }
 
 export function countBuckets(findings: HygieneFinding[]): HygieneCounts {
   return findings.reduce<HygieneCounts>(
     (accumulator, finding) => {
-      if (finding.bucket === "good") {
+      if (finding.applicability === "not-applicable") {
+        accumulator.notApplicable = (accumulator.notApplicable ?? 0) + 1;
+      } else if (finding.bucket === "good") {
         accumulator.good += 1;
       } else if (finding.bucket === "warning") {
         accumulator.warning += 1;
@@ -31,7 +36,7 @@ export function countBuckets(findings: HygieneFinding[]): HygieneCounts {
       }
       return accumulator;
     },
-    { good: 0, warning: 0, fixNow: 0 },
+    { good: 0, warning: 0, fixNow: 0, notApplicable: 0 },
   );
 }
 
