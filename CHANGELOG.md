@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/oleg-koval/agent-hygiene-linter/compare/v1.1.2...v1.2.0) (2026-10-19)
+
+
+### Features
+
+* make hygiene checks ecosystem-aware ([#14](https://github.com/oleg-koval/agent-hygiene-linter/issues/14)) ([3f73f95](https://github.com/oleg-koval/agent-hygiene-linter/commit/3f73f9527f4cfd0f01cf13c4eef95e58c7349b9a))
+
 ## [1.1.2](https://github.com/oleg-koval/agent-hygiene-linter/compare/v1.1.1...v1.1.2) (2026-10-18)
 
 
